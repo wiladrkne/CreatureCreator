@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GnomeLife Prompt Compiler v3.0</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #111a14; color: #c6d1c0; margin: 0; padding: 20px; }
+    .header { text-align: center; margin-bottom: 25px; }
+    .header h1 { color: #dcb36d; margin: 0; font-size: 2.3em; }
+    .header p { color: #8a9c82; margin: 5px 0 0 0; letter-spacing: 2px; font-size: 0.85em; }
+    .pipeline-label { text-align: center; color: #4a6b4a; font-size: 0.75em; letter-spacing: 3px; margin-bottom: 18px; text-transform: uppercase; }
+    
+    /* ── CONFIG BAR ── */
+    .config-bar { max-width: 1200px; margin: 0 auto 20px auto; background: #16241c; border: 1px solid #2d4234; border-radius: 6px; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+    .config-title { font-size: 0.85em; color: #dcb36d; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+    .engine-select { background: #0d140f; color: #e2e8df; border: 1px solid #3a5a3a; padding: 6px 12px; border-radius: 4px; font-size: 0.85em; cursor: pointer; outline: none; }
+    
+    .container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }
+
+    /* ── CARD BASE ── */
+    .category-box { background-color: #1a271e; border: 1px solid #2d4234; border-radius: 8px; padding: 15px; transition: border-color 0.2s; }
+    .category-box.single-pick { border-color: #4a3b1a; }
+    .category-box.locked { border-color: #1e3a5c; background-color: #141e28; }
+    .category-box.locked .category-title { color: #5a8ab0; }
+    .category-box.locked .category-subtitle { color: #3a5a70; }
+    .category-box.locked .checkbox-grid { opacity: 0.55; }
+
+    /* ── CARD HEADERS ── */
+    .step-row { display: flex; align-items: flex-start; gap: 8px; border-bottom: 1px solid #2d4234; padding-bottom: 8px; margin-bottom: 10px; }
+    .step-info { flex: 1; }
+    .category-title { color: #a4c097; margin: 0; font-size: 0.95em; text-transform: uppercase; letter-spacing: 1px; }
+    .category-subtitle { color: #5a7a52; font-size: 0.72em; font-style: italic; margin-top: 2px; }
+    .single-badge { font-size: 0.6em; color: #8a6a2a; background: #2a1e0a; border: 1px solid #4a3b1a; border-radius: 3px; padding: 1px 5px; display: inline-block; margin-top: 4px; }
+
+    .lock-btn { background: none; border: 1px solid #2d4234; border-radius: 4px; color: #5a7a52; font-size: 0.8em; cursor: pointer; padding: 3px 7px; transition: all 0.2s; }
+    .lock-btn:hover { border-color: #4a8ab0; color: #4a8ab0; }
+    .locked .lock-btn { border-color: #1e5a8c; color: #4a8ab0; background: #0d1a26; }
+
+    /* ── CHECKBOXES ── */
+    .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    label { font-size: 0.8em; cursor: pointer; display: flex; align-items: center; }
+    input[type="checkbox"] { margin-right: 7px; accent-color: #4a6b4a; flex-shrink: 0; }
+
+    /* ── OUTPUT ── */
+    .output-section { max-width: 1200px; margin: 30px auto 0 auto; background-color: #152019; border: 2px dashed #4a6b4a; border-radius: 8px; padding: 20px; text-align: center; }
+    .output-section h2 { color: #a4c097; margin-top: 0; letter-spacing: 1px; font-size: 1.5em; }
+    textarea { width: 95%; height: 80px; background-color: #0d140f; color: #e2e8df; border: 1px solid #2d4234; border-radius: 5px; padding: 10px; font-family: monospace; font-size: 0.9em; margin-top: 5px; resize: vertical; line-height: 1.5; }
+    .controls { margin-top: 14px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    button { background-color: #3b563b; color: #fff; border: none; padding: 10px 22px; font-size: 0.95em; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+    button:hover { background-color: #4a6b4a; }
+    .btn-unified { background-color: #dcb36d; color: #111a14; font-weight: bold; }
+    .btn-unified:hover { background-color: #f0cb85; }
+    .btn-clear { background-color: #5c3030; }
+    .btn-clear:hover { background-color: #7a3e3e; }
+    .meta-info { font-size: 0.75em; color: #5a7a52; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🍄 GnomeLife Prompt Compiler</h1>
+    <p>VERSION 3.0 — DETERMINISTIC TAXONOMY SANITIZATION</p>
+</div>
+<div class="pipeline-label">▸ Compiling Array Logic Left-to-Right ▸</div>
+
+<div class="config-bar">
+    <div class="config-title">⚙ Compiler Optimization Matrix</div>
+    <div>
+        <label style="display:inline; margin-right:10px; color:#8a9c82; font-size:0.85em;">Target Text-Encoder Architecture:</label>
+        <select id="engine-architecture" class="engine-select" onchange="generatePrompt()">
+            <option value="flux">Flux / PixArt (T5 - Balanced Semantic Blocks)</option>
+            <option value="sdxl">Stable Diffusion / SDXL (CLIP - Cohesive Tiered Weights 1.2x)</option>
+        </select>
+    </div>
+</div>
+
+<div class="container" id="generator-form"></div>
+
+<div class="output-section">
+    <h2>COMPILED TARGET OUTPUT</h2>
+    <p style="font-size:0.8em; color:#8a9c82; margin:0;">Sanitized Positive Tokens:</p>
+    <textarea id="prompt-output" readonly>Select configurations above to compile target data...</textarea>
+    <div class="meta-info" id="char-count">0 characters</div>
+    
+    <h3 style="color: #b07070; margin-top: 18px; margin-bottom: 2px; font-size: 0.85em; letter-spacing: 1px; text-transform: uppercase;">🚫 Hard Anatomy Boundary Shield (Negative CFG)</h3>
+    <textarea id="negative-output" style="height: 50px; background-color: #140d0d; border-color: #422d2d; color: #e8dfdf;" readonly>human, person, human face, woman, man, humanoid, human figure, no human hands, no human facial features, no human posture, deformed, blurry</textarea>
+    
+    <div class="controls">
+        <button class="btn-unified" onclick="copyUnifiedBlock()">📋 Copy Unified Prompt</button>
+        <button onclick="randomizeAll()">🎲 Random Complation</button>
+        <button class="btn-clear" onclick="clearAll()">✕ Clear All</button>
+    </div>
+</div>
+
+<script>
+    // ── V3.0 DETERMINISTIC TRANSLATION DICTIONARIES ──────────────────────────
+    // Rule 1: Soft Anatomy Modifiers -> Geometric/Textural Form alternatives
+    const anatomyTranslationMap = {
+        "High Cheekbones": "angular skull shape",
+        "Youthful Face": "smooth unblemished hide structural features",
+        "Soft Features": "rounded facial geometry",
+        "Sharp Eyes": "piercing narrow ocular structures",
+        "Rosy Cheeks": "flushed localized skin coloration",
+        "Freckled Face": "mottled skin pigmentation patterns",
+        "Twinkling Eyes": "highly reflective glossy irises",
+        "Wrinkled Smile": "weathered skin creases around mouth line",
+        "Chubby Face": "broad wide skull proportions",
+        "Long Eyelashes": "extended protective ocular fringes",
+        "Thick Eyebrows": "dense prominent brow ridges",
+        "Weathered Skin": "coarse leathery hide texture",
+        "Button Nose": "small compact nasal protuberance",
+        "Dimples": "symmetric facial indentations",
+        "Gentle Expression": "neutral static expression",
+        "Strong Jawline": "pronounced angular lower mandible",
+        "Mischievous Grin": "asymmetric mouth line curving upwards"
+    };
+
+    // Rule 2: Active Subject Verbs -> Passive Scene-Context/Prop Alternatives
+    const actionTranslationMap = {
+        "Gardening": "standing static amidst cultivated dense vegetation beds and soil tools",
+        "Cooking": "standing positioned behind a simmering ceramic pot resting over an open flame pit",
+        "Alchemy": "positioned motionless before an array of glass alembics and crystal vials",
+        "Blacksmithing": "standing static beside an iron anvil with a heavy metal hammer prop nearby",
+        "Woodworking": "stationed before a heavy timber workbench covered in wood shavings and chisels",
+        "Fishing": "standing static along an embankment edge near a primitive wooden fishing pole prop",
+        "Mining": "positioned unmoving next to exposed stone ore veins with a pickaxe resting nearby",
+        "Foraging": "kneeling static beside various forest flora specimens and a wicker basket",
+        "Tailoring": "stationed next to fabric shears and textiles draped over a wooden bench",
+        "Brewing": "standing adjacent to large wooden fermentation casks and ladles",
+        "Storytelling": "seated completely still before a small gathering of unmoving listening elements",
+        "Magic": "surrounded by swirling wisps of energy patterns suspended in the surrounding air",
+        "Healing": "standing static beside bundles of dried medicinal flora arrangements",
+        "Tracking": "crouched completely motionless examining structural depressions on the soil surface",
+        "Pottery": "seated static behind a primitive manual clay spinning wheel with unbaked earthenware vessels",
+        "Music": "holding a small wooden stringed instrument prop flat against its torso in a static pose",
+        "Painting": "standing completely motionless before a tall wooden easel structure containing a canvas sketch",
+        "Animal Care": "standing unmoving directly beside a tranquil resting creature",
+        "Engineering": "positioned static over flat blueprint layouts with brass measuring compasses",
+        "Mapping": "stationed before an open leather scroll document depicting geographical charts"
+    };
+
+    // ── INSIDE-OUT PIPELINE CONFIGURATION ────────────────────────────────────
+    const pipeline = [
+        { key: "creature", label: "Subject Anchor", subtitle: "Step 1 — Core Taxonomy Definition", singlePick: true, traits: ["Gnome","Dragon","Phoenix","Griffin","Minotaur","Centaur","Mermaid","Kraken","Cerberus","Chimera","Manticore","Pegasus","Sphinx","Basilisk","Wyvern","Yeti","Banshee","Kitsune","Troll","Goblin","Leviathan","Wendigo","Selkie","Naga","Dryad","Fenrir","Thunderbird","Nixie","Cockatrice","Djinn","Tanuki"] },
+        { key: "personality", label: "Personality Weight", subtitle: "Step 2 — Mood Modulation", singlePick: true, traits: ["Kind","Curious","Brave","Cheerful","Shy","Mischievous","Wise","Loyal","Playful","Patient","Adventurous","Creative","Dreamy","Grumpy","Optimistic","Humble","Stubborn","Generous","Hardworking","Quirky"] },
+        { key: "appearance", label: "Physical Geometry", subtitle: "Step 3 — Form (Auto-Sanitized)", singlePick: true, traits: ["Rosy Cheeks","Freckled Face","Round Nose","Pointy Ears","Twinkling Eyes","Wrinkled Smile","Chubby Face","Sharp Eyes","Long Eyelashes","Thick Eyebrows","Youthful Face","Weathered Skin","High Cheekbones","Button Nose","Dimples","Sparkling Eyes","Gentle Expression","Strong Jawline","Soft Features","Mischievous Grin"] },
+        { key: "hair", label: "Anatomical Accents", subtitle: "Step 4 — Surface Growth", singlePick: true, traits: ["Long White Beard","Short Beard","Braided Beard","Curly Beard","No Beard","Wild Hair","Bald Head","Red Beard","Grey Beard","Mustache","Twin Braids","Ponytail","Dreadlocks","Flowing Hair","Spiky Hair","Sideburns","Top Knot","Buzz Cut","Long Brown Hair","Golden Beard"] },
+        { key: "hat", label: "Headwear Structural Props", subtitle: "Step 5 — Upper Enclosure", singlePick: true, traits: ["Pointy Hat","Knit Cap","Leaf Hat","Mushroom Cap","Hooded Cloak","Patchwork Hat","Bell Hat","Tall Wizard Hat","Slouchy Beanie","Flower Crown","Straw Hat","Adventurer Hat","Hood with Ears","Pilgrim Hat","Nightcap","Leather Cap","Crown of Twigs","Chef Hat","Miner Helmet","Decorated Cap"] },
+        { key: "outfit", label: "Apparel Enclosure", subtitle: "Step 6 — Subject Outer Layer", singlePick: true, traits: ["Farmer Overalls","Ranger Cloak","Wizard Robes","Blacksmith Apron","Adventurer Gear","Herbalist Wraps","Tailor Vest","Miner Overalls","Fisherman Coat","Baker Outfit","Druid Robes","Leather Armor","Patchwork Clothes","Royal Garb","Scholar Robes","Gardener Apron","Cook Apron","Steampunk Coat","Simple Tunic","Explorer Outfit"] },
+        { key: "skills", label: "Environmental Context", subtitle: "Step 7 — Passive Action (Auto-Sanitized)", singlePick: true, traits: ["Gardening","Cooking","Alchemy","Blacksmithing","Woodworking","Fishing","Mining","Foraging","Tailoring","Brewing","Storytelling","Magic","Healing","Tracking","Pottery","Music","Painting","Animal Care","Engineering","Mapping"] },
+        { key: "companion", label: "Secondary Creature Element", subtitle: "Step 8 — Non-Human Assets", singlePick: true, traits: ["Fox","Rabbit","Squirrel","Hedgehog","Owl","Badger","Cat","Dog","Bird","Deer","Frog","Toad","Mouse","Butterfly","Turtle","Goose","Goat","Dragonfly","Bee","Snail"] },
+        { key: "scene", label: "Core Setting Vector", subtitle: "Step 9 — Background Matrix", singlePick: true, traits: ["Enchanted Forest","Ancient Ruins","Mushroom Cavern","Tidal Cliffs","Sunlit Meadow","Frozen Tundra","Volcanic Crater","Floating Islands","Underground Library","Misty Swamp","Crystal Grotto","Haunted Village","Celestial Observatory","Coral Reef Kingdom","Desert Oasis","Stormy Mountaintop","Bamboo Grove","Cursed Battlefield","Fairy Ring Clearing","Glowing Bioluminescent Jungle"] },
+        { key: "backstory", label: "Contextual Anchoring", subtitle: "Step 10 — Grounding Subtext", singlePick: true, traits: ["Forest Dweller","Mountain Clan","River Village","Meadow Explorer","Cave Dweller","Garden Keeper","Library Scholar","Traveling Cart","Mine Worker","Coast Dweller","Village Baker","Royal Guard","Wandering Bard","Hermit","Caravan Trader","Shipwright","Temple Monk","Star Gazer","Reclusive Artist","Guardian of Ruins"] },
+        { key: "lighting", label: "Atmospheric Illumination", subtitle: "Step 11 — Spectral Density", singlePick: true, traits: ["Golden Hour","Moonlit Fog","Candlelight Glow","Thunderstorm Ambience","Soft Dawn Light","Dappled Forest Sunlight","Bioluminescent Glow","Twilight Haze","Overcast Diffused Light","Firelight Flicker","Northern Lights","Harsh Midday Sun","Deep Shadow Contrast","Underwater Caustics","Volcanic Ember Glow","Misty Morning Light","Starlit Night","Lantern Warm Glow","Eclipse Light","Ethereal Bloom"] },
+        { key: "renderstyle", label: "Visual Processing Style", subtitle: "Step 12 — Output Delineation", singlePick: false, traits: ["Burtonesque","Pixaresque","Miyazaki-esque","Disney Classic","Dark Fantasy","Watercolor Wash","Oil Painting","Ink Sketch","Comic Book","Storybook Illustration","Volumetric Light","Ray Traced","Subsurface Scattering","Depth of Field","Bokeh Background","Tilt Shift","Macro Close-up","Full Body Shot","Portrait Framing","Wide Cinematic Shot","4K Resolution","8K Resolution","Ultra HD","Hyperrealistic","Cinematic Grade"] }
+    ];
+
+    // ── BUILD INTERFACE ──────────────────────────────────────────────────────
+    const form = document.getElementById('generator-form');
+
+    pipeline.forEach(cat => {
+        const box = document.createElement('div');
+        box.className = 'category-box' + (cat.singlePick ? ' single-pick' : '');
+        box.dataset.key = cat.key;
+        box.dataset.locked = "false";
+
+        const stepRow = document.createElement('div');
+        stepRow.className = 'step-row';
+
+        const stepInfo = document.createElement('div');
+        stepInfo.className = 'step-info';
+        stepInfo.innerHTML = `<div class="category-title">${cat.label}</div><div class="category-subtitle">${cat.subtitle}</div>`;
+
+        if (cat.singlePick) {
+            const badge = document.createElement('span');
+            badge.className = 'single-badge';
+            badge.textContent = 'Slot Cap Enforced';
+            stepInfo.appendChild(document.createElement('br'));
+            stepInfo.appendChild(badge);
+        }
+
+        const lockBtn = document.createElement('button');
+        lockBtn.className = 'lock-btn';
+        lockBtn.textContent = '🔓 Open';
+        lockBtn.addEventListener('click', () => {
+            const isLocked = box.dataset.locked === "true";
+            box.dataset.locked = isLocked ? "false" : "true";
+            box.classList.toggle('locked');
+            lockBtn.textContent = isLocked ? '🔓 Open' : '🔒 Locked';
+        });
+
+        stepRow.appendChild(stepInfo);
+        stepRow.appendChild(lockBtn);
+        box.appendChild(stepRow);
+
+        const grid = document.createElement('div');
+        grid.className = 'checkbox-grid';
+        cat.traits.forEach(trait => {
+            const label = document.createElement('label');
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = trait;
+            cb.dataset.key = cat.key;
+            cb.className = 'trait-checkbox';
+            
+            cb.addEventListener('change', () => {
+                if (cat.singlePick && cb.checked) {
+                    cb.closest('.checkbox-grid').querySelectorAll('.trait-checkbox').forEach(s => { if (s !== cb) s.checked = false; });
+                }
+                generatePrompt();
+            });
+            
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(trait));
+            grid.appendChild(label);
+        });
+
+        box.appendChild(grid);
+        form.appendChild(box);
+    });
+
+    // ── V3.0 DETERMINISTIC COMPILER ENGINE ───────────────────────────────────
+    function generatePrompt() {
+        const output = document.getElementById('prompt-output');
+        const countEl = document.getElementById('char-count');
+        const arch = document.getElementById('engine-architecture').value;
+
+        // Collect raw user selection state
+        const selected = {};
+        pipeline.forEach(cat => { selected[cat.key] = []; });
+        document.querySelectorAll('.trait-checkbox:checked').forEach(cb => {
+            selected[cb.dataset.key].push(cb.value);
+        });
+
+        const hasAny = Object.values(selected).some(arr => arr.length > 0);
+        if (!hasAny) {
+            output.value = "Select configurations above to compile target data...";
+            countEl.textContent = "0 characters";
+            return;
+        }
+
+        let compiledSubjectBlock = "";
+        const remainingTokens = [];
+
+        pipeline.forEach(cat => {
+            if (selected[cat.key] && selected[cat.key].length > 0) {
+                selected[cat.key].forEach(val => {
+                    
+                    // STEP 1 & 2: Compile Subject Base + Suffix Taxonomy Shield
+                    if (cat.key === "creature") {
+                        let anchor = "figure";
+                        if (val.toLowerCase() === "gnome") anchor = "creature";
+                        else if (["dragon", "phoenix", "griffin", "minotaur", "centaur", "kraken", "cerberus", "chimera", "manticore", "pegasus", "sphinx", "basilisk", "wyvern", "leviathan", "fenrir", "thunderbird", "cockatrice"].includes(val.toLowerCase())) {
+                            anchor = "beast";
+                        }
+                        
+                        // Form complete base block
+                        compiledSubjectBlock = `${val} ${anchor}, non-human`;
+                    } 
+                    
+                    // STEP 3: Auto-Sanitize Soft Anatomy Modifiers via Mapping Dictionaries
+                    else if (cat.key === "appearance" && anatomyTranslationMap[val]) {
+                        remainingTokens.push(anatomyTranslationMap[val]);
+                    } 
+                    
+                    // STEP 7: Convert Active Actions to Passive/Environmental Context
+                    else if (cat.key === "skills" && actionTranslationMap[val]) {
+                        remainingTokens.push(actionTranslationMap[val]);
+                    } 
+                    
+                    // Step-through execution for normal system tags
+                    else {
+                        remainingTokens.push(val);
+                    }
+                });
+            }
+        });
+
+        // Rule 3: Tiered Engine Architecture Weight Compiler
+        let finalOutputString = "";
+        if (compiledSubjectBlock) {
+            if (arch === "sdxl") {
+                // Apply cohesive block scalar weighting to isolate from later semantic noise
+                finalOutputString = `(${compiledSubjectBlock}:1.2), ` + remainingTokens.join(", ");
+            } else {
+                // Flux T5 architecture functions best with natural unweighted block continuity
+                finalOutputString = `${compiledSubjectBlock}, ` + remainingTokens.join(", ");
+            }
+        } else {
+            finalOutputString = remainingTokens.join(", ");
+        }
+
+        output.value = finalOutputString;
+        countEl.textContent = finalOutputString.length + " characters";
+    }
+
+    // ── OPERATIONS ENGINE ────────────────────────────────────────────────────
+    function clearAll() {
+        document.querySelectorAll('.trait-checkbox').forEach(cb => cb.checked = false);
+        generatePrompt();
+    }
+
+    function randomizeAll() {
+        pipeline.forEach(cat => {
+            const box = document.querySelector(`.category-box[data-key="${cat.key}"]`);
+            if (box.dataset.locked === "true") return;
+
+            box.querySelectorAll('.trait-checkbox').forEach(cb => cb.checked = false);
+            const boxes = box.querySelectorAll('.trait-checkbox');
+            const max = cat.singlePick ? 1 : Math.floor(Math.random() * 2) + 1;
+            
+            const indices = new Set();
+            while (indices.size < Math.min(max, boxes.length)) {
+                indices.add(Math.floor(Math.random() * boxes.length));
+            }
+            indices.forEach(i => boxes[i].checked = true);
+        });
+        generatePrompt();
+    }
+
+    function copyUnifiedBlock() {
+        const pos = document.getElementById('prompt-output').value;
+        const neg = document.getElementById('negative-output').value;
+        if (!pos || pos.startsWith("Select configurations")) {
+            alert("Compile a configuration array before copying.");
+            return;
+        }
+
+        const combinedBlock = `${pos}\n${neg}`;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(combinedBlock).then(() => showVisualFeedback());
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = combinedBlock; document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); document.body.removeChild(ta);
+            showVisualFeedback();
+        }
+    }
+
+    function showVisualFeedback() {
+        const btn = document.querySelector('.btn-unified');
+        const originalText = btn.textContent;
+        btn.textContent = "✔ Unified Package Copied!";
+        btn.style.backgroundColor = "#a4c097";
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.backgroundColor = "#dcb36d";
+        }, 1200);
+    }
+</script>
+</body>
+</html>

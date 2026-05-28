@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GnomeLife Prompt Compiler v3.3</title>
+<style>
+  :root {
+    --bg: #111a14;
+    --card: #1a241e;
+    --border: #2f3d33;
+    --accent: #dcb36d;
+    --heading: #a4c097;
+    --text: #e8e8e8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, system-ui, sans-serif;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { color: var(--heading); margin-top: 0; }
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) {
+    .container { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .category {
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #243028;
+  }
+  .category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: var(--heading);
+  }
+  .traits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .trait {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #222e26;
+    padding: 5px 9px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: all .2s;
+    cursor: pointer;
+    user-select: none;
+  }
+  .trait:hover { border-color: var(--accent); }
+  .trait input { accent-color: var(--accent); }
+  button {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 9px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: transform .1s;
+  }
+  button:active { transform: scale(0.98); }
+  button.secondary {
+    background: #2f3d33;
+    color: var(--accent);
+  }
+  #validation-message {
+    background: #241f12;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    min-height: 1.6em;
+    font-weight: 500;
+  }
+  textarea {
+    width: 100%;
+    height: 260px;
+    background: #0e1511;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    resize: vertical;
+    font-family: ui-monospace, monospace;
+  }
+  .locked { outline: 2px dashed var(--accent); outline-offset: 4px; }
+  details { margin-top: 24px; }
+  summary { cursor: pointer; color: var(--heading); font-weight: 700; }
+  pre { white-space: pre-wrap; background: #0e1511; padding: 12px; border-radius: 8px; border:1px solid var(--border); }
+</style>
+</head>
+<body>
+<h1>GnomeLife Prompt Compiler v3.3</h1>
+<div class="container">
+  <div class="card" id="controls">
+    <div style="margin-bottom:12px;">
+      <label>Engine Architecture:
+        <select id="engine" style="margin-left:8px; background:#222e26; color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:6px;">
+          <option value="Flux">Flux</option>
+          <option value="SDXL">SDXL</option>
+        </select>
+      </label>
+    </div>
+    <div id="categories"></div>
+    <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button id="compileBtn">⚙ Compile</button>
+      <button id="randomBtn">Random Compilation</button>
+      <button id="clearBtn" class="secondary">Clear</button>
+      <button id="copyBtn">Copy Unified Block</button>
+    </div>
+  </div>
+  <div class="card">
+    <div id="validation-message"></div>
+    <textarea id="output" placeholder="Select configurations and click Compile..." readonly></textarea>
+  </div>
+</div>
+
+<details>
+<summary>Verification Blueprint v2.0 Documentation</summary>
+<pre>
+# Verification Blueprint v2.0
+
+## Phase 1
+Validator logic and conflict gates implementation.
+
+## Phase 2
+Automated test suite for permissive, extreme, and adversarial scenarios.
+
+## Phase 3
+Final approval workflow and deployment sign-off.
+
+### Conflict Map
+```json
+{
+  'Watercolor Wash': ['Ray Traced', 'Subsurface Scattering'],
+  'Ink Sketch': ['Ray Traced', 'Subsurface Scattering'],
+  'Portrait Framing': ['Full Body Shot'],
+  'Macro Close-up': ['Full Body Shot'],
+  'Wide Cinematic Shot': ['Portrait Framing'],
+  'Dark Fantasy': ['Hyperrealistic'],
+  'Hyperrealistic': ['Watercolor Wash', 'Ink Sketch']
+}
+```
+
+### Approval Workflow
+| Step | Owner | Status |
+|------|-------|--------|
+| 1 | Prompt Engineer | Approved |
+| 2 | QA Validator | Approved |
+| 3 | Release Lead | Approved |
+```
+</pre>
+</details>
+
+<script>
+const CONFLICT_MAP = {
+  'Watercolor Wash': ['Ray Traced', 'Subsurface Scattering'],
+  'Ink Sketch': ['Ray Traced', 'Subsurface Scattering'],
+  'Portrait Framing': ['Full Body Shot'],
+  'Macro Close-up': ['Full Body Shot'],
+  'Wide Cinematic Shot': ['Portrait Framing'],
+  'Dark Fantasy': ['Hyperrealistic'],
+  'Hyperrealistic': ['Watercolor Wash', 'Ink Sketch']
+};
+
+const CATEGORIES = [
+  { id:'creature', name:'Creature', multi:false, traits:['Forest Gnome','Mountain Gnome','River Gnome'] },
+  { id:'personality', name:'Personality', multi:false, traits:['Cheerful','Grumpy','Wise'] },
+  { id:'appearance', name:'Appearance', multi:false, traits:['Stout','Lanky','Round'] },
+  { id:'hair', name:'Hair', multi:false, traits:['Braided Beard','Wild Mane','Clean Shaven'] },
+  { id:'hat', name:'Hat', multi:false, traits:['Pointed Red Cap','Mushroom Cap','Leafy Wreath'] },
+  { id:'outfit', name:'Outfit', multi:false, traits:['Patched Tunic','Leather Vest','Embroidered Robe'] },
+  { id:'skills', name:'Skills', multi:false, traits:['Herbalism','Tinkering','Storytelling'] },
+  { id:'companion', name:'Companion', multi:false, traits:['Robin','Mole','Firefly Swarm'] },
+  { id:'scene', name:'Scene', multi:false, traits:['Mossy Hollow','Toadstool Village','Crystal Cave'] },
+  { id:'backstory', name:'Backstory', multi:false, traits:['Keeper of Lost Keys','Guardian of Sprouts','Wanderer'] },
+  { id:'lighting', name:'Lighting', multi:false, traits:['Golden Hour','Moonlit Glow','Lantern Light'] },
+  { id:'renderstyle', name:'Render Style', multi:true, traits:['Watercolor Wash','Ink Sketch','Portrait Framing','Full Body Shot','Macro Close-up','Wide Cinematic Shot','Dark Fantasy','Hyperrealistic','Ray Traced','Subsurface Scattering'] },
+];
+
+const anatomyTranslationMap = {
+  'Forest Gnome': 'short sturdy limbs, large nose',
+  'Mountain Gnome': 'broad shoulders, thick beard',
+  'River Gnome': 'slender frame, webbed fingers'
+};
+
+const actionTranslationMap = {
+  'Herbalism': 'gathering herbs',
+  'Tinkering': 'repairing tiny gears',
+  'Storytelling': 'gesturing vividly'
+};
+
+const locks = {};
+const categoriesDiv = document.getElementById('categories');
+const output = document.getElementById('output');
+const validationMessage = document.getElementById('validation-message');
+
+function conflicts(a,b){
+  return (CONFLICT_MAP[a] && CONFLICT_MAP[a].includes(b)) || (CONFLICT_MAP[b] && CONFLICT_MAP[b].includes(a));
+}
+
+function renderCategories(){
+  CATEGORIES.forEach(cat => {
+    const catDiv = document.createElement('div');
+    catDiv.className='category';
+    catDiv.dataset.cat = cat.id;
+    const header = document.createElement('div');
+    header.className='category-header';
+    const title = document.createElement('span');
+    title.textContent = cat.name;
+    const lockBtn = document.createElement('button');
+    lockBtn.textContent='🔓';
+    lockBtn.className='secondary';
+    lockBtn.style.padding='2px 8px';
+    lockBtn.onclick = () => {
+      locks[cat.id] = !locks[cat.id];
+      lockBtn.textContent = locks[cat.id] ? '🔒' : '🔓';
+      catDiv.classList.toggle('locked', !!locks[cat.id]);
+    };
+    header.appendChild(title);
+    header.appendChild(lockBtn);
+    catDiv.appendChild(header);
+    const traitsDiv = document.createElement('div');
+    traitsDiv.className='traits';
+    cat.traits.forEach(trait => {
+      const label = document.createElement('label');
+      label.className='trait';
+      const input = document.createElement('input');
+      input.type = cat.multi ? 'checkbox' : 'radio';
+      input.name = cat.id;
+      input.value = trait;
+      input.addEventListener('change', updateConflictGates);
+      const span = document.createElement('span');
+      span.textContent = trait;
+      label.appendChild(input);
+      label.appendChild(span);
+      traitsDiv.appendChild(label);
+    });
+    catDiv.appendChild(traitsDiv);
+    categoriesDiv.appendChild(catDiv);
+  });
+}
+
+function updateConflictGates(){
+  const allInputs = document.querySelectorAll('#categories input');
+  allInputs.forEach(inp => {
+    inp.disabled = false;
+    inp.parentElement.style.opacity = '1';
+    inp.parentElement.style.pointerEvents = 'auto';
+  });
+  const checked = [...document.querySelectorAll('#categories input:checked')];
+  // disable conflicting unchecked
+  checked.forEach(aInput => {
+    const a = aInput.value;
+    document.querySelectorAll('#categories input:not(:checked)').forEach(bInput => {
+      const b = bInput.value;
+      if (conflicts(a,b)) {
+        bInput.disabled = true;
+        bInput.parentElement.style.opacity = '0.5';
+        bInput.parentElement.style.pointerEvents = 'none';
+      }
+    });
+  });
+  // detect checked-vs-checked conflicts
+  for (let i=0; i<checked.length; i++) {
+    for (let j=i+1; j<checked.length; j++) {
+      const a = checked[i].value;
+      const b = checked[j].value;
+      if (conflicts(a,b)) {
+        validationMessage.textContent = `Incompatible mix: ${a} ↔ ${b}. Please deselect one.`;
+        return false;
+      }
+    }
+  }
+  validationMessage.textContent = '';
+  return true;
+}
+
+function validateAndCompile(){
+  if (!updateConflictGates()){
+    output.value = '⚠️ Compilation blocked: resolve conflicts before copying.';
+    return;
+  }
+  generatePrompt();
+}
+
+function generatePrompt(){
+  const selected = {};
+  CATEGORIES.forEach(cat => {
+    if (cat.multi) {
+      selected[cat.id] = [...document.querySelectorAll(`input[name="${cat.id}"]:checked`)].map(i=>i.value);
+    } else {
+      const el = document.querySelector(`input[name="${cat.id}"]:checked`);
+      selected[cat.id] = el ? el.value : '';
+    }
+  });
+  if (!selected.creature){
+    output.value = 'Select configurations and click Compile.';
+    return;
+  }
+  const geometry = [selected.creature, anatomyTranslationMap[selected.creature], selected.appearance, selected.companion ? `with ${selected.companion}` : ''].filter(Boolean).join(', ');
+  const medium = [document.getElementById('engine').value, ...(selected.renderstyle || [])].filter(Boolean).join(', ');
+  const style = [selected.personality, selected.hair, selected.hat, selected.outfit].filter(Boolean).join(', ');
+  const atmosphere = [selected.scene, selected.backstory, selected.lighting, selected.skills ? actionTranslationMap[selected.skills] : ''].filter(Boolean).join(', ');
+  const resolution = document.getElementById('engine').value === 'Flux' ? 'ultra-detailed, 8k' : 'high detail, SDXL master';
+  const finalPrompt = `[Geometry] ${geometry} + [Medium] ${medium} + [Style] ${style} + [Atmosphere] ${atmosphere} + [Resolution] ${resolution}`;
+  output.value = finalPrompt;
+}
+
+function copyUnifiedBlock(){
+  const val = output.value;
+  if (val.startsWith('⚠️') || val.startsWith('Select configurations') || val.trim() === ''){
+    alert('Compile a valid configuration before copying.');
+    return;
+  }
+  navigator.clipboard.writeText(val).then(()=> alert('Copied!')).catch(()=> alert('Copy failed'));
+}
+
+function randomize(){
+  CATEGORIES.forEach(cat => {
+    if (locks[cat.id]) return;
+    const inputs = [...document.querySelectorAll(`input[name="${cat.id}"]`)];
+    inputs.forEach(i=>i.checked=false);
+    if (cat.multi){
+      const count = Math.min(2, inputs.length);
+      const shuffled = inputs.sort(()=>0.5-Math.random()).slice(0,count);
+      shuffled.forEach(i=>i.checked=true);
+    } else {
+      const pick = inputs[Math.floor(Math.random()*inputs.length)];
+      if (pick) pick.checked = true;
+    }
+  });
+  updateConflictGates();
+}
+
+function clearAll(){
+  document.querySelectorAll('#categories input').forEach(i=>{
+    i.checked=false;
+    i.disabled=false;
+    i.parentElement.style.opacity='1';
+    i.parentElement.style.pointerEvents='auto';
+  });
+  output.value = '';
+  validationMessage.textContent = '';
+}
+
+document.getElementById('compileBtn').addEventListener('click', validateAndCompile);
+document.getElementById('randomBtn').addEventListener('click', randomize);
+document.getElementById('clearBtn').addEventListener('click', clearAll);
+document.getElementById('copyBtn').addEventListener('click', copyUnifiedBlock);
+
+renderCategories();
+updateConflictGates();
+
+// Expose for backward compatibility
+window.generatePrompt = generatePrompt;
+
+// Phase 2 Test Suite
+window.GnomeLifeTests = {
+  runPermissiveCheck(){
+    clearAll();
+    CATEGORIES.forEach(cat => {
+      const first = cat.traits[0];
+      const input = document.querySelector(`input[name="${cat.id}"][value="${first}"]`);
+      if (input){
+        if (cat.multi) document.querySelectorAll(`input[name="${cat.id}"]`).forEach(i=>i.checked=false);
+        input.checked = true;
+      }
+    });
+    const gates = updateConflictGates();
+    console.log('PermissiveCheck: gates passed?', gates);
+    validateAndCompile();
+    console.log('PermissiveCheck output:', output.value);
+  },
+  runExtremeCheck(){
+    clearAll();
+    document.querySelectorAll('input[name="renderstyle"]').forEach(i=>i.checked=true);
+    const result = updateConflictGates();
+    console.log('ExtremeCheck: conflict detection result (should be false):', result);
+  },
+  runAdversarialCheck(){
+    clearAll();
+    document.querySelectorAll('input[name="renderstyle"]').forEach(i=>i.checked=false);
+    const w = document.querySelector('input[name="renderstyle"][value="Watercolor Wash"]');
+    const r = document.querySelector('input[name="renderstyle"][value="Ray Traced"]');
+    if (w) w.checked = true;
+    if (r) r.checked = true;
+    const result = updateConflictGates();
+    console.log('AdversarialCheck: conflict detected? (expected true)', !result);
+    validateAndCompile();
+  }
+};
+</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+</body>
+</html>

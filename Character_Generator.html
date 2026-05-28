@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GnomeLife Prompt Generator</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #111a14; color: #c6d1c0; margin: 0; padding: 20px; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h1 { color: #dcb36d; margin: 0; font-size: 2.5em; }
+    .header p { color: #8a9c82; margin: 5px 0 0 0; letter-spacing: 2px; font-size: 0.85em; }
+    .pipeline-label { text-align: center; color: #4a6b4a; font-size: 0.75em; letter-spacing: 3px; margin-bottom: 18px; text-transform: uppercase; }
+    .container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }
+
+    /* ── CARD BASE ── */
+    .category-box { background-color: #1a271e; border: 1px solid #2d4234; border-radius: 8px; padding: 15px; transition: border-color 0.2s, opacity 0.2s; }
+    .category-box.single-pick { border-color: #4a3b1a; }
+
+    /* ── LOCKED STATE ── */
+    .category-box.locked { border-color: #1e3a5c; background-color: #141e28; }
+    .category-box.locked .category-title { color: #5a8ab0; }
+    .category-box.locked .category-subtitle { color: #3a5a70; }
+    .category-box.locked .checkbox-grid { opacity: 0.55; }
+
+    /* ── STEP ROW ── */
+    .step-row { display: flex; align-items: flex-start; gap: 8px; border-bottom: 1px solid #2d4234; padding-bottom: 8px; margin-bottom: 10px; }
+    .step-info { flex: 1; }
+    .category-title { color: #a4c097; margin: 0; font-size: 1.0em; text-transform: uppercase; letter-spacing: 1px; }
+    .category-subtitle { color: #5a7a52; font-size: 0.72em; font-style: italic; margin-top: 2px; }
+
+    /* ── BADGES ROW ── */
+    .badge-row { display: flex; align-items: center; gap: 5px; margin-top: 4px; }
+    .single-badge { font-size: 0.62em; color: #8a6a2a; background: #2a1e0a; border: 1px solid #4a3b1a; border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+
+    /* ── LOCK BUTTON ── */
+    .lock-btn {
+        background: none;
+        border: 1px solid #2d4234;
+        border-radius: 4px;
+        color: #5a7a52;
+        font-size: 0.85em;
+        cursor: pointer;
+        padding: 3px 7px;
+        line-height: 1;
+        transition: all 0.2s;
+        white-space: nowrap;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+    .lock-btn:hover { border-color: #4a8ab0; color: #4a8ab0; background: none; }
+    .locked .lock-btn { border-color: #1e5a8c; color: #4a8ab0; background: #0d1a26; }
+    .locked .lock-btn:hover { border-color: #6aaad0; color: #6aaad0; background: #0d1a26; }
+
+    /* ── CHECKBOXES ── */
+    .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    label { font-size: 0.83em; cursor: pointer; display: flex; align-items: center; }
+    input[type="checkbox"] { margin-right: 7px; accent-color: #4a6b4a; flex-shrink: 0; }
+
+    /* ── OUTPUT ── */
+    .output-section { max-width: 1200px; margin: 30px auto 0 auto; background-color: #152019; border: 2px dashed #4a6b4a; border-radius: 8px; padding: 20px; text-align: center; }
+    .output-section h2 { color: #a4c097; margin-top: 0; letter-spacing: 1px; }
+    textarea { width: 95%; height: 120px; background-color: #0d140f; color: #e2e8df; border: 1px solid #2d4234; border-radius: 5px; padding: 10px; font-family: monospace; font-size: 0.92em; margin-top: 10px; resize: vertical; line-height: 1.5; }
+    .controls { margin-top: 14px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    button { background-color: #3b563b; color: #fff; border: none; padding: 10px 22px; font-size: 0.95em; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+    button:hover { background-color: #4a6b4a; }
+    .btn-clear { background-color: #5c3030; }
+    .btn-clear:hover { background-color: #7a3e3e; }
+    .char-count { font-size: 0.78em; color: #5a7a52; margin-top: 6px; }
+    .lock-hint { font-size: 0.75em; color: #3a5a42; margin-top: 4px; }
+
+    /* ── HISTORY PANEL ── */
+    .history-section { max-width: 1200px; margin: 16px auto 0 auto; border: 1px solid #2d4234; border-radius: 8px; overflow: hidden; }
+    .history-toggle { width: 100%; background: #152019; border: none; color: #8a9c82; padding: 11px 18px; text-align: left; cursor: pointer; font-size: 0.88em; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+    .history-toggle:hover { background: #1a2b1e; }
+    .history-toggle .arrow { transition: transform 0.25s; font-style: normal; }
+    .history-toggle.open .arrow { transform: rotate(180deg); }
+    .history-body { background: #111a14; display: none; padding: 12px 16px 16px; }
+    .history-body.open { display: block; }
+    .history-empty { color: #3a5a42; font-size: 0.82em; font-style: italic; text-align: center; padding: 10px 0; }
+    .history-entry { background: #1a271e; border: 1px solid #2d4234; border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; }
+    .history-entry:last-child { margin-bottom: 0; }
+    .history-meta { flex-shrink: 0; text-align: right; min-width: 52px; }
+    .history-num { font-size: 0.7em; color: #4a6b4a; font-weight: bold; letter-spacing: 1px; }
+    .history-time { font-size: 0.68em; color: #3a5a42; margin-top: 2px; }
+    .history-text { flex: 1; font-size: 0.8em; color: #b0c0ac; line-height: 1.5; font-family: monospace; word-break: break-word; }
+    .history-actions { flex-shrink: 0; display: flex; flex-direction: column; gap: 5px; }
+    .history-btn { background: #2a3d2a; border: 1px solid #3a5a3a; color: #a4c097; border-radius: 3px; padding: 4px 9px; font-size: 0.75em; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
+    .history-btn:hover { background: #3b563b; }
+    .history-btn.restore { background: #1e2e3a; border-color: #2a4a5a; color: #7ab0c8; }
+    .history-btn.restore:hover { background: #2a3e52; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🍄 GnomeLife</h1>
+    <p>CHARACTER PROMPT GENERATOR</p>
+</div>
+<div class="pipeline-label">▸ Build your character step by step ▸</div>
+
+<div class="container" id="generator-form"></div>
+
+<div class="output-section">
+    <h2>YOUR GENERATED PROMPT</h2>
+    <p style="font-size:0.88em; color:#8a9c82; margin:0;">Selections update the prompt live. Copy directly into Meta AI Image Generator.</p>
+    <textarea id="prompt-output" readonly>Select traits above to build your gnome prompt...</textarea>
+    <div class="char-count" id="char-count">0 characters</div>
+    <div class="lock-hint">🔒 Lock a card to protect its selections from being overwritten by Random</div>
+    <div class="controls">
+        <button onclick="saveToHistory()">💾 Save to History</button>
+        <button onclick="copyPrompt()">📋 Copy to Clipboard</button>
+        <button onclick="randomizeAll()">🎲 Random</button>
+        <button class="btn-clear" onclick="clearAll()">✕ Clear All</button>
+    </div>
+</div>
+
+<!-- HISTORY PANEL -->
+<div class="history-section">
+    <button class="history-toggle" id="history-toggle" onclick="toggleHistory()">
+        <span>📜 PROMPT HISTORY <span id="history-count-badge"></span></span>
+        <span class="arrow">▼</span>
+    </button>
+    <div class="history-body" id="history-body">
+        <div class="history-empty" id="history-empty">No saved prompts yet — hit 💾 Save to History after building a prompt.</div>
+        <div id="history-list"></div>
+    </div>
+</div>
+
+<script>
+    const pipeline = [
+        {
+            key: "creature",
+            label: "Mythological Creature",
+            subtitle: "Step 1 — Choose your subject",
+            singlePick: true,
+            traits: ["Gnome","Dragon","Phoenix","Griffin","Minotaur","Centaur","Mermaid","Kraken","Cerberus","Chimera","Manticore","Pegasus","Sphinx","Basilisk","Wyvern","Yeti","Banshee","Kitsune","Troll","Goblin","Leviathan","Wendigo","Selkie","Naga","Dryad","Fenrir","Thunderbird","Nixie","Cockatrice","Djinn","Tanuki"]
+        },
+        {
+            key: "scene",
+            label: "Scene / Setting",
+            subtitle: "Step 2 — Set the stage",
+            singlePick: true,
+            traits: ["Enchanted Forest","Ancient Ruins","Mushroom Cavern","Tidal Cliffs","Sunlit Meadow","Frozen Tundra","Volcanic Crater","Floating Islands","Underground Library","Misty Swamp","Crystal Grotto","Haunted Village","Celestial Observatory","Coral Reef Kingdom","Desert Oasis","Stormy Mountaintop","Bamboo Grove","Cursed Battlefield","Fairy Ring Clearing","Glowing Bioluminescent Jungle"]
+        },
+        {
+            key: "backstory",
+            label: "Home / Backstory",
+            subtitle: "Step 3 — Establish origins",
+            singlePick: false,
+            traits: ["Forest Dweller","Mountain Clan","River Village","Meadow Explorer","Cave Dweller","Garden Keeper","Library Scholar","Traveling Cart","Mine Worker","Coast Dweller","Village Baker","Royal Guard","Wandering Bard","Hermit","Caravan Trader","Shipwright","Temple Monk","Star Gazer","Reclusive Artist","Guardian of Ruins"]
+        },
+        {
+            key: "personality",
+            label: "Personality",
+            subtitle: "Step 4 — Shape the soul",
+            singlePick: false,
+            traits: ["Kind","Curious","Brave","Cheerful","Shy","Mischievous","Wise","Loyal","Playful","Patient","Adventurous","Creative","Dreamy","Grumpy","Optimistic","Humble","Stubborn","Generous","Hardworking","Quirky"]
+        },
+        {
+            key: "appearance",
+            label: "Appearance",
+            subtitle: "Step 5 — Craft the face",
+            singlePick: false,
+            traits: ["Rosy Cheeks","Freckled Face","Round Nose","Pointy Ears","Twinkling Eyes","Wrinkled Smile","Chubby Face","Sharp Eyes","Long Eyelashes","Thick Eyebrows","Youthful Face","Weathered Skin","High Cheekbones","Button Nose","Dimples","Sparkling Eyes","Gentle Expression","Strong Jawline","Soft Features","Mischievous Grin"]
+        },
+        {
+            key: "hair",
+            label: "Beard / Hair",
+            subtitle: "Step 6 — Add character",
+            singlePick: false,
+            traits: ["Long White Beard","Short Beard","Braided Beard","Curly Beard","No Beard","Wild Hair","Bald Head","Red Beard","Grey Beard","Mustache","Twin Braids","Ponytail","Dreadlocks","Flowing Hair","Spiky Hair","Sideburns","Top Knot","Buzz Cut","Long Brown Hair","Golden Beard"]
+        },
+        {
+            key: "hat",
+            label: "Hat Style",
+            subtitle: "Step 7 — Crown the look",
+            singlePick: false,
+            traits: ["Pointy Hat","Knit Cap","Leaf Hat","Mushroom Cap","Hooded Cloak","Patchwork Hat","Bell Hat","Tall Wizard Hat","Slouchy Beanie","Flower Crown","Straw Hat","Adventurer Hat","Hood with Ears","Pilgrim Hat","Nightcap","Leather Cap","Crown of Twigs","Chef Hat","Miner Helmet","Decorated Cap"]
+        },
+        {
+            key: "outfit",
+            label: "Outfit / Clothing",
+            subtitle: "Step 8 — Dress the role",
+            singlePick: false,
+            traits: ["Farmer Overalls","Ranger Cloak","Wizard Robes","Blacksmith Apron","Adventurer Gear","Herbalist Wraps","Tailor Vest","Miner Overalls","Fisherman Coat","Baker Outfit","Druid Robes","Leather Armor","Patchwork Clothes","Royal Garb","Scholar Robes","Gardener Apron","Cook Apron","Steampunk Coat","Simple Tunic","Explorer Outfit"]
+        },
+        {
+            key: "skills",
+            label: "Skills / Talents",
+            subtitle: "Step 9 — Define the craft",
+            singlePick: false,
+            traits: ["Gardening","Cooking","Alchemy","Blacksmithing","Woodworking","Fishing","Mining","Foraging","Tailoring","Brewing","Storytelling","Magic","Healing","Tracking","Pottery","Music","Painting","Animal Care","Engineering","Mapping"]
+        },
+        {
+            key: "companion",
+            label: "Pet / Companion",
+            subtitle: "Step 10 — Choose a companion",
+            singlePick: false,
+            traits: ["Fox","Rabbit","Squirrel","Hedgehog","Owl","Badger","Cat","Dog","Bird","Deer","Frog","Toad","Mouse","Butterfly","Turtle","Goose","Goat","Dragonfly","Bee","Snail"]
+        },
+        {
+            key: "lighting",
+            label: "Lighting / Mood",
+            subtitle: "Step 11 — Paint the atmosphere",
+            singlePick: true,
+            traits: ["Golden Hour","Moonlit Fog","Candlelight Glow","Thunderstorm Ambience","Soft Dawn Light","Dappled Forest Sunlight","Bioluminescent Glow","Twilight Haze","Overcast Diffused Light","Firelight Flicker","Northern Lights","Harsh Midday Sun","Deep Shadow Contrast","Underwater Caustics","Volcanic Ember Glow","Misty Morning Light","Starlit Night","Lantern Warm Glow","Eclipse Light","Ethereal Bloom"]
+        },
+        {
+            key: "renderstyle",
+            label: "Visual Style / Render",
+            subtitle: "Step 12 — Define the look and feel",
+            singlePick: false,
+            traits: [
+                "Burtonesque","Pixaresque","Miyazaki-esque","Disney Classic","Dark Fantasy",
+                "Watercolor Wash","Oil Painting","Ink Sketch","Comic Book","Storybook Illustration",
+                "Volumetric Light","Ray Traced","Subsurface Scattering","Depth of Field","Bokeh Background",
+                "Tilt Shift","Macro Close-up","Full Body Shot","Portrait Framing","Wide Cinematic Shot",
+                "4K Resolution","8K Resolution","Ultra HD","Hyperrealistic","Cinematic Grade"
+            ]
+        }
+    ];
+
+    // ── BUILD UI ─────────────────────────────────────────────────────────────
+    const form = document.getElementById('generator-form');
+
+    pipeline.forEach(cat => {
+        const box = document.createElement('div');
+        box.className = 'category-box' + (cat.singlePick ? ' single-pick' : '');
+        box.dataset.key = cat.key;
+        box.dataset.locked = "false";
+
+        // Step row
+        const stepRow = document.createElement('div');
+        stepRow.className = 'step-row';
+
+        // Title + subtitle block
+        const stepInfo = document.createElement('div');
+        stepInfo.className = 'step-info';
+        stepInfo.innerHTML = `<div class="category-title">${cat.label}</div><div class="category-subtitle">${cat.subtitle}</div>`;
+
+        // Badge row (single-pick indicator)
+        if (cat.singlePick) {
+            const badgeRow = document.createElement('div');
+            badgeRow.className = 'badge-row';
+            const badge = document.createElement('span');
+            badge.className = 'single-badge';
+            badge.textContent = '1 on Random';
+            badgeRow.appendChild(badge);
+            stepInfo.appendChild(badgeRow);
+        }
+
+        // Lock button
+        const lockBtn = document.createElement('button');
+        lockBtn.className = 'lock-btn';
+        lockBtn.textContent = '🔓 Unlocked';
+        lockBtn.title = 'Lock to protect from Random';
+        lockBtn.addEventListener('click', () => toggleLock(box, lockBtn));
+
+        stepRow.appendChild(stepInfo);
+        stepRow.appendChild(lockBtn);
+        box.appendChild(stepRow);
+
+        // Checkbox grid
+        const grid = document.createElement('div');
+        grid.className = 'checkbox-grid';
+        cat.traits.forEach(trait => {
+            const label = document.createElement('label');
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = trait;
+            cb.dataset.key = cat.key;
+            cb.className = 'trait-checkbox';
+            cb.addEventListener('change', generatePrompt);
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(trait));
+            grid.appendChild(label);
+        });
+
+        box.appendChild(grid);
+        form.appendChild(box);
+    });
+
+    // ── LOCK TOGGLE ───────────────────────────────────────────────────────────
+    function toggleLock(box, btn) {
+        const isLocked = box.dataset.locked === "true";
+        if (isLocked) {
+            box.dataset.locked = "false";
+            box.classList.remove('locked');
+            btn.textContent = '🔓 Unlocked';
+        } else {
+            box.dataset.locked = "true";
+            box.classList.add('locked');
+            btn.textContent = '🔒 Locked';
+        }
+    }
+
+    // ── COLLECT SELECTIONS BY KEY ─────────────────────────────────────────────
+    function getSelected() {
+        const result = {};
+        pipeline.forEach(cat => { result[cat.key] = []; });
+        document.querySelectorAll('.trait-checkbox:checked').forEach(cb => {
+            result[cb.dataset.key].push(cb.value);
+        });
+        return result;
+    }
+
+    // ── PROMPT BUILDER — Meta AI optimized ───────────────────────────────────
+    function generatePrompt() {
+        const s = getSelected();
+        const output = document.getElementById('prompt-output');
+        const countEl = document.getElementById('char-count');
+
+        const hasAny = Object.values(s).some(arr => arr.length > 0);
+        if (!hasAny) {
+            output.value = "Select traits above to build your gnome prompt...";
+            countEl.textContent = "0 characters";
+            return;
+        }
+
+        const parts = [];
+
+        // S1: Subject — creature drives the subject line
+        const creatureVal = s.creature.length ? s.creature[0] : null;
+        const isGnome = creatureVal && creatureVal.toLowerCase() === "gnome";
+        const subjectWord = creatureVal ? creatureVal.toLowerCase() : "character";
+
+        // Determine correct article before personality or subject word
+        const firstDescWord = s.personality.length ? s.personality[0] : subjectWord;
+        const openArticle = ['a','e','i','o','u'].includes(firstDescWord[0].toLowerCase()) ? "an" : "a";
+
+        let subject = "A highly detailed storybook illustration of " + openArticle;
+        if (s.personality.length) subject += " " + s.personality.join(", ").toLowerCase();
+        subject += " " + subjectWord;
+        if (s.backstory.length)   subject += " — a " + s.backstory.join(", ").toLowerCase();
+        parts.push(subject + ".");
+
+        // S2: Physical description
+        const physical = [];
+        if (s.appearance.length) physical.push("a face with " + s.appearance.join(", ").toLowerCase());
+        if (s.hair.length)       physical.push(s.hair.join(", ").toLowerCase());
+        if (s.hat.length)        physical.push("wearing a " + s.hat.join(" and ").toLowerCase());
+        if (s.outfit.length)     physical.push("dressed in " + s.outfit.join(", ").toLowerCase());
+        if (physical.length)     parts.push("The " + subjectWord + " has " + physical.join(", ") + ".");
+
+        // S3: Skills
+        if (s.skills.length) {
+            parts.push("Known for their mastery of " + s.skills.join(", ").toLowerCase() + ".");
+        }
+
+        // S4: Companion
+        if (s.companion.length) {
+            parts.push("Accompanied by a loyal " + s.companion.join(" and a ").toLowerCase() + ".");
+        }
+
+        // S5: Setting
+        if (s.scene.length) {
+            parts.push("Set in " + addArticle(s.scene[0]) + ".");
+        }
+
+        // S6: Mythological creature — only shown as background if NOT gnome
+        if (creatureVal && !isGnome) {
+            parts.push(addArticle(creatureVal, true) + " looms in the distance, adding to the legend.");
+        }
+
+        // S7: Lighting / Mood
+        if (s.lighting.length) {
+            parts.push("The scene is bathed in " + s.lighting[0].toLowerCase() + ".");
+        }
+
+        // S8: Visual Style / Render — dynamic style tail
+        const styleBase = "Fantasy storybook art, painterly brushwork, rich earthy tones, intricate hand-crafted details, vibrant color palette";
+        if (s.renderstyle.length) {
+            parts.push(styleBase + ". Rendered in " + s.renderstyle.join(", ").toLowerCase() + " style.");
+        } else {
+            parts.push(styleBase + ", 8k resolution.");
+        }
+
+        const prompt = parts.join(" ");
+        output.value = prompt;
+        countEl.textContent = prompt.length + " characters";
+    }
+
+    // ── HELPERS ───────────────────────────────────────────────────────────────
+    function addArticle(word, capitalize = false) {
+        const article = ['A','E','I','O','U'].includes(word[0].toUpperCase()) ? "an" : "a";
+        const prefix = capitalize ? article.charAt(0).toUpperCase() + article.slice(1) : article;
+        return prefix + " " + word;
+    }
+
+    function clearAll() {
+        document.querySelectorAll('.trait-checkbox').forEach(cb => cb.checked = false);
+        generatePrompt();
+    }
+
+    // ── RANDOM — respects lock state and singlePick ───────────────────────────
+    function randomizeAll() {
+        // Only clear and re-roll unlocked cards
+        pipeline.forEach(cat => {
+            const box = document.querySelector(`.category-box[data-key="${cat.key}"]`);
+            if (box.dataset.locked === "true") return; // skip locked cards
+
+            // Clear this card's checks
+            box.querySelectorAll('.trait-checkbox').forEach(cb => cb.checked = false);
+
+            // Re-roll
+            const boxes = box.querySelectorAll('.trait-checkbox');
+            const max = cat.singlePick ? 1 : Math.floor(Math.random() * 3) + 1;
+            const indices = new Set();
+            while (indices.size < Math.min(max, boxes.length)) {
+                indices.add(Math.floor(Math.random() * boxes.length));
+            }
+            indices.forEach(i => boxes[i].checked = true);
+        });
+        generatePrompt();
+    }
+
+    function copyPrompt() {
+        const output = document.getElementById('prompt-output');
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(output.value).then(() => alert("Prompt copied to clipboard!"));
+        } else {
+            output.select();
+            document.execCommand('copy');
+            alert("Prompt copied to clipboard!");
+        }
+    }
+
+    // ── HISTORY ───────────────────────────────────────────────────────────────
+    const MAX_HISTORY = 5;
+    let promptHistory = []; // [ { text, time, label } ]
+
+    function saveToHistory() {
+        const text = document.getElementById('prompt-output').value;
+        if (!text || text.startsWith("Select traits")) {
+            alert("Build a prompt first before saving.");
+            return;
+        }
+
+        // Avoid exact duplicates
+        if (promptHistory.length && promptHistory[0].text === text) {
+            alert("This prompt is already saved at the top of history.");
+            return;
+        }
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        promptHistory.unshift({ text, time: timeStr });
+        if (promptHistory.length > MAX_HISTORY) promptHistory.pop();
+
+        renderHistory();
+
+        // Auto-open history panel when first save happens
+        const body = document.getElementById('history-body');
+        const toggle = document.getElementById('history-toggle');
+        if (!body.classList.contains('open')) {
+            body.classList.add('open');
+            toggle.classList.add('open');
+        }
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        const empty = document.getElementById('history-empty');
+        const badge = document.getElementById('history-count-badge');
+
+        badge.textContent = promptHistory.length ? `(${promptHistory.length}/${MAX_HISTORY})` : '';
+
+        if (!promptHistory.length) {
+            empty.style.display = 'block';
+            list.innerHTML = '';
+            return;
+        }
+
+        empty.style.display = 'none';
+        list.innerHTML = promptHistory.map((entry, i) => `
+            <div class="history-entry">
+                <div class="history-meta">
+                    <div class="history-num">#${i + 1}</div>
+                    <div class="history-time">${entry.time}</div>
+                </div>
+                <div class="history-text">${escapeHtml(entry.text)}</div>
+                <div class="history-actions">
+                    <button class="history-btn" onclick="copyFromHistory(${i})">📋 Copy</button>
+                    <button class="history-btn restore" onclick="loadFromHistory(${i})">↩ Restore</button>
+                    <button class="history-btn" style="background:#3a1a1a;border-color:#5a2a2a;color:#b07070;" onclick="deleteFromHistory(${i})">✕</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function copyFromHistory(i) {
+        const text = promptHistory[i].text;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => alert("History prompt copied!"));
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            alert("History prompt copied!");
+        }
+    }
+
+    function loadFromHistory(i) {
+        // Restore prompt text to the output box (selections already changed — this just restores the text for reference/copy)
+        const output = document.getElementById('prompt-output');
+        const countEl = document.getElementById('char-count');
+        output.value = promptHistory[i].text;
+        countEl.textContent = promptHistory[i].text.length + " characters";
+    }
+
+    function deleteFromHistory(i) {
+        promptHistory.splice(i, 1);
+        renderHistory();
+    }
+
+    function toggleHistory() {
+        const body = document.getElementById('history-body');
+        const toggle = document.getElementById('history-toggle');
+        body.classList.toggle('open');
+        toggle.classList.toggle('open');
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+</script>
+</body>
+</html>
