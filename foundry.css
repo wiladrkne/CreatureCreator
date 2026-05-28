@@ -1,0 +1,347 @@
+/* ==========================================================================
+   🔩 CREATURE CREATOR MASTER BLUEPRINT — CORE FOUNDRY DESIGN SYSTEM
+   ========================================================================== */
+
+:root {
+  /* Immutable Color Tokens */
+  --forge-black:     #0a0806;
+  --iron-plate:      #1a1612;
+  --rust-edge:       #2d1f0e;
+  --brass-primary:   #b8860b;
+  --copper-glow:     #cd7f32;
+  --toxic-vent:      #4a7c59;
+  --coal-smoke:      #3d3530;
+  --steam-white:     #e8ddd0;
+  --rust-text:       #9a7a5a;
+  --amber-heat:      #ff8c00;
+  --void-red:        #8b0000;
+  --verdigris:       #3d7a5a;
+
+  /* Typography Stacks */
+  --font-display:    'UnifrakturMaguntia', 'MedievalSharp', cursive;
+  --font-ui:         'Share Tech Mono', 'Courier Prime', monospace;
+  --font-body:       'Crimson Text', 'EB Garamond', serif;
+  --font-chassis:    'VT323', 'Press Start 2P', monospace;
+}
+
+/* Base Form Reset Constraints */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  background-color: var(--forge-black);
+  color: var(--steam-white);
+  font-family: var(--font-body);
+  font-size: 16px;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ==========================================================================
+   🧱 BACKGROUND LAYERING SYSTEM
+   ========================================================================== */
+
+.forge-bg-matrix {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.deep-void {
+  background: radial-gradient(circle at center, var(--iron-plate) 0%, var(--forge-black) 100%);
+  z-index: 2;
+}
+
+.noise-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.08;
+  z-index: 3;
+}
+
+.brand-glow-layer {
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: clamp(4rem, 15vw, 12rem);
+  font-weight: 900;
+  letter-spacing: 0.5rem;
+  color: var(--amber-heat);
+  opacity: 0.12;
+  text-shadow: 0 0 40px var(--void-red);
+  user-select: none;
+}
+
+.steam-wisp-container {
+  z-index: 5;
+}
+
+/* ==========================================================================
+   📱 WORKSPACE VIEWPORT LAYOUT FRAMEWORK (390PX MOBILE-FIRST)
+   ========================================================================== */
+
+.foundry-viewport {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 390px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-left: 1px solid var(--rust-edge);
+  border-right: 1px solid var(--rust-edge);
+  background: transparent;
+}
+
+/* Header UI Elements */
+.forge-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-bottom: 2px solid var(--rust-edge);
+  padding-bottom: 12px;
+}
+
+.brand-stencil {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  line-height: 1;
+  color: var(--brass-primary);
+  text-shadow: 1px 2px 0px var(--forge-black);
+}
+
+.brand-signature {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: var(--rust-text);
+  margin-top: 4px;
+}
+
+.license-status-badge {
+  align-self: flex-start;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  background-color: var(--rust-edge);
+  border: 1px solid var(--brass-primary);
+  color: var(--brass-primary);
+  letter-spacing: 1px;
+}
+
+/* Cascade Workspace Window */
+.cascade-workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cascade-loading-fallback {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--rust-text);
+  text-align: center;
+  padding: 40px 0;
+  text-transform: uppercase;
+}
+
+/* Foundry Console Outputs */
+.foundry-console {
+  background-color: var(--iron-plate);
+  border: 1px solid var(--rust-edge);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-header {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--rust-text);
+  letter-spacing: 1px;
+}
+
+.output-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--rust-edge);
+  padding-bottom: 4px;
+}
+
+.tab-toggle {
+  background: transparent;
+  border: none;
+  color: var(--rust-text);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.tab-toggle.active {
+  color: var(--copper-glow);
+  border-bottom: 2px solid var(--copper-glow);
+  font-weight: bold;
+}
+
+.console-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#promptOutput {
+  width: 100%;
+  height: 90px;
+  background-color: var(--forge-black);
+  border: 1px solid var(--rust-edge);
+  color: var(--steam-white);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 8px;
+  resize: none;
+  outline: none;
+}
+
+.action-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: var(--rust-edge);
+  border: 1px solid var(--copper-glow);
+  color: var(--steam-white);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: var(--rust-edge);
+}
+
+/* Mechanical Controls */
+.foundry-controls {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+  padding-bottom: 10px;
+}
+
+.soul-cast-trigger {
+  width: 100%;
+  max-width: 280px;
+  height: 48px;
+  background: linear-gradient(180deg, var(--iron-plate) 0%, var(--forge-black) 100%);
+  border: 2px solid var(--brass-primary);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  position: relative;
+  cursor: pointer;
+}
+
+.soul-cast-trigger .btn-text {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  color: var(--steam-white);
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Modular Dock Controls Matrix */
+.docked-modules {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--rust-edge);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+.egg-chamber-module {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.boiler-gauge-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 70px;
+}
+
+.boiler-label {
+  font-family: var(--font-chassis);
+  font-size: 0.75rem;
+  color: var(--rust-text);
+}
+
+.gauge-bar {
+  width: 100%;
+  height: 6px;
+  background-color: var(--forge-black);
+  border: 1px solid var(--rust-edge);
+}
+
+.gauge-fill {
+  width: 10%;
+  height: 100%;
+  background-color: var(--amber-heat);
+}
+
+.egg-slots-grid {
+  display: flex;
+  gap: 8px;
+}
+
+.egg-slot {
+  width: 32px;
+  height: 40px;
+  background-color: var(--iron-plate);
+  border: 1px dashed var(--rust-text);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  opacity: 0.5;
+}
+
+@media (min-width: 420px) {
+  .foundry-viewport {
+    max-width: 420px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+  }
+}
