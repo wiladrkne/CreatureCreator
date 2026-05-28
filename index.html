@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Creature Creator</title>
+  <!-- Google Fonts for Design System -->
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;700&family=EB+Garamond:wght@400;700&family=MedievalSharp&family=Share+Tech+Mono&family=UnifrakturMaguntia&family=VT323&family=Press+Start+2P&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Core Foundry Design System CSS -->
+  <link rel="stylesheet" href="foundry.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="forge-bg-matrix">
+    <div class="bg-layer deep-void"></div>
+    <div class="bg-layer noise-grain"></div>
+    <div class="bg-layer brand-glow-layer">CREATURE CREATOR</div>
+    <!-- You can add an animated steam-wisp here -->
+  </div>
+  <div class="foundry-viewport">
+    <header class="forge-header">
+      <div class="brand-stencil">
+        <h1 class="brand-title">Creature Creator</h1>
+        <span class="brand-signature">by Wiladrkne</span>
+      </div>
+      <span class="license-status-badge">ALPHA</span>
+    </header>
+    <main class="cascade-workspace">
+      <div class="cascade-loading-fallback">Loading Magic...</div>
+      <section class="foundry-console">
+        <div class="panel-header">Console Output</div>
+        <div class="output-tabs">
+          <button class="tab-toggle active">Prompt</button>
+          <button class="tab-toggle">Log</button>
+        </div>
+        <div class="console-box">
+          <textarea id="promptOutput" placeholder="Awaiting output..."></textarea>
+        </div>
+      </section>
+      <button class="action-btn">Generate Creature</button>
+    </main>
+    <footer class="foundry-controls">
+      <button class="soul-cast-trigger">
+        <span class="btn-text">CAST SOUL</span>
+      </button>
+    </footer>
+    <aside class="docked-modules">
+      <div class="egg-chamber-module">
+        <div class="boiler-gauge-wrapper">
+          <label class="boiler-label">Boiler</label>
+          <div class="gauge-bar">
+            <div class="gauge-fill" style="width:40%;"></div>
+          </div>
+        </div>
+        <div class="egg-slots-grid">
+          <div class="egg-slot"></div>
+          <div class="egg-slot"></div>
+          <div class="egg-slot"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</body>
+</html>
